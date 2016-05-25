@@ -3,10 +3,9 @@ require 'middleman-core'
 
 # Extension namespace
 class DexterityThumbs < ::Middleman::Extension
-  option :cache, 'cache/thumbs', 'default thumbnail cache directory for use in building'
-
-  @@images = Hash.new
+  option :cache, 'thumbs_cache', 'default thumbnail cache directory for use in building'
   @@cache = nil
+  @@images = []
 
   def initialize(app, options_hash={}, &block)
     # Call super to build options from the options_hash
@@ -16,8 +15,7 @@ class DexterityThumbs < ::Middleman::Extension
     require 'mini_magick'
     require 'base64'
     require 'fileutils'
-    require 'time'
-
+    require 'find'
     @@cache = options.cache
   end
 
@@ -29,19 +27,19 @@ class DexterityThumbs < ::Middleman::Extension
   end
 
   def after_build(builder)
-    puts @@images.length
-    puts @@cache
-    @@images.each do |image|
-      puts image
+    #Dir.glob(@@cache + "/**/*") do |item|
+    #  puts item
+    #end
+    Find.find(@@cache) do |img|
+      unless File.directory?(img)
+        FileUtils.mv(img, img.gsub(@@cache, @@build_dir))
+        builder.trigger(:created, img.gsub(@@cache, @@build_dir))
+      end
     end
-  end
 
-  #A Sitemap Manipulator
-  def manipulate_resource_list(resources)
-    puts "!! RESOURCES"
-    resources
-  end
+    FileUtils.rm_r @@cache
 
+  end
 
   def self.abs_path(img_path)
     File.join(@@source_dir, middleman_abs_path(img_path))
@@ -55,21 +53,19 @@ class DexterityThumbs < ::Middleman::Extension
 
     def create_image_thumb(image_path, resize_string)
 
-      new_fname = image_path[0..-5] + "_" + resize_string + image_path [-4..-1]
+      new_fname = image_path[0..-5] + "_" + resize_string + image_path [-4..-1] # yeah i know this is bad
       new_fname_cache = @@cache + ::DexterityThumbs.middleman_abs_path(new_fname)
 
-      unless @@images.key?(image_path)
+      unless @@images.include?(new_fname)
        image = MiniMagick::Image.open(::DexterityThumbs.abs_path(image_path))
        image.resize(resize_string)
        FileUtils.mkdir_p(File.dirname(new_fname_cache))
        image.write(new_fname_cache)
-       @@images[new_fname] = image
+       @@images << new_fname
       end
 
       if @@environment == :development
-        b64data = Base64.strict_encode64(File.read(new_fname_cache))
-        puts b64data
-        return "data:#{image.mime_type};base64,#{b64data}"
+        return "data:#{image.mime_type};base64,#{Base64.strict_encode64(File.read(new_fname_cache))}"
       else
         return @@build_dir + new_fname
       end
