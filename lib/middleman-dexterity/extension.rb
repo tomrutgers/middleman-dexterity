@@ -3,7 +3,7 @@ require 'middleman-core'
 
 # Extension namespace
 class DexterityThumbs < ::Middleman::Extension
-  option :cache, 'thumbs_cache', 'default thumbnail cache directory for use in building'
+  option :cache, 'thumbs_cache/', 'default thumbnail cache directory for use in building'
   @@cache = nil
   @@images = []
 
@@ -29,13 +29,11 @@ class DexterityThumbs < ::Middleman::Extension
   def after_build(builder)
     Find.find(@@cache) do |img|
       unless File.directory?(img)
-        FileUtils.mv(img, img.gsub(@@cache, @@build_dir))
-        builder.trigger(:created, img.gsub(@@cache, @@build_dir))
+        FileUtils.mv(img, build_location(img))
+        builder.trigger(:created, img.gsub(@@cache, build_location(img)))
       end
     end
-
     FileUtils.rm_r @@cache ## if this is something like cache/thumbs then cache/ will be left over
-
   end
 
   def self.abs_path(img_path)
@@ -46,11 +44,15 @@ class DexterityThumbs < ::Middleman::Extension
     img_path.start_with?('/') ? img_path : File.join(@@images_dir, img_path)
   end
 
+  def build_location(img_path)
+    @@build_dir + (img_path.gsub(@@cache, "").start_with?('/') ? img_path.gsub(@@cache, "") : '/' + img_path.gsub(@@cache, ""))
+  end
+
   helpers do
 
     def create_image_thumb(image_path, resize_string)
 
-      new_fname = image_path[0..(image_path.rindex('.') - 1)] + "_" + resize_string + image_path[image_path.rindex('.')..-1] 
+      new_fname = image_path[0..(image_path.rindex('.') - 1)] + "_" + resize_string + image_path[image_path.rindex('.')..-1]
       new_fname_cache = @@cache + ::DexterityThumbs.middleman_abs_path(new_fname)
 
       unless @@images.include?(new_fname)
@@ -59,6 +61,8 @@ class DexterityThumbs < ::Middleman::Extension
        FileUtils.mkdir_p(File.dirname(new_fname_cache))
        image.write(new_fname_cache)
        @@images << new_fname
+      else
+        image = MiniMagick::Image.open(new_fname_cache) # so mime_type doesnt fail
       end
 
       if @@environment == :development
