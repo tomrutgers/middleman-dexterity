@@ -4,6 +4,9 @@ require 'middleman-core'
 # Extension namespace
 class DexterityThumbs < ::Middleman::Extension
   option :cache, 'thumbs_cache/', 'default thumbnail cache directory for use in building'
+  option :pre_clear_cache, true, 'clear cache during initialization; disable if there\'s load weirdness and the dir gets cleared twice (after thumbs are generated/it seems like no thumbs are made)'
+  option :post_clear_cache, true, 'clear cache after copying to build dir; disable if you want to check generated thumbs'
+
   @@cache = nil
   @@images = []
 
@@ -17,6 +20,13 @@ class DexterityThumbs < ::Middleman::Extension
     require 'fileutils'
     require 'find'
     @@cache = options.cache
+    @@clear_cache = options.post_clear_cache
+
+
+    if (File.directory?(@@cache)) and (options.pre_clear_cache)
+      FileUtils.rm_r @@cache
+    end
+
   end
 
   def after_configuration
@@ -30,10 +40,12 @@ class DexterityThumbs < ::Middleman::Extension
     Find.find(@@cache) do |img|
       unless File.directory?(img)
         FileUtils.mv(img, build_location(img))
-        builder.trigger(:created, img.gsub(@@cache, build_location(img)))
+        builder.trigger(:created, build_location(img))
       end
     end
-    FileUtils.rm_r @@cache ## if this is something like cache/thumbs then cache/ will be left over
+    if @@clear_cache
+      FileUtils.rm_r @@cache ## if this is something like cache/thumbs then cache/ will be left over
+    end
   end
 
   def self.abs_path(img_path)
