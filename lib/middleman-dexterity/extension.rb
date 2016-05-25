@@ -3,7 +3,7 @@ require 'middleman-core'
 
 # Extension namespace
 class DexterityThumbs < ::Middleman::Extension
-  option :cache, 'thumbs_cache/', 'default thumbnail cache directory for use in building'
+  option :cache, 'thumbs_cache', 'default thumbnail cache directory for use in building'
   option :pre_clear_cache, true, 'clear cache during initialization; disable if there\'s load weirdness and the dir gets cleared twice (after thumbs are generated/it seems like no thumbs are made)'
   option :post_clear_cache, true, 'clear cache after copying to build dir; disable if you want to check generated thumbs'
 
@@ -39,8 +39,8 @@ class DexterityThumbs < ::Middleman::Extension
   def after_build(builder)
     Find.find(@@cache) do |img|
       unless File.directory?(img)
-        FileUtils.mv(img, build_location(img))
-        builder.trigger(:created, build_location(img))
+        FileUtils.mv(img, img.gsub(@@cache, @@build_dir))
+        builder.trigger(:created, img.gsub(@@cache, @@build_dir))
       end
     end
     if @@clear_cache
@@ -53,11 +53,7 @@ class DexterityThumbs < ::Middleman::Extension
   end
 
   def self.middleman_abs_path(img_path)
-    img_path.start_with?('/') ? img_path : File.join(@@images_dir, img_path)
-  end
-
-  def build_location(img_path)
-    @@build_dir + (img_path.gsub(@@cache, "").start_with?('/') ? img_path.gsub(@@cache, "") : '/' + img_path.gsub(@@cache, ""))
+    img_path.start_with?('/' + @@images_dir) ? img_path : File.join('/' + @@images_dir, img_path)
   end
 
   helpers do
@@ -80,7 +76,7 @@ class DexterityThumbs < ::Middleman::Extension
       if @@environment == :development
         return "data:#{image.mime_type};base64,#{Base64.strict_encode64(File.read(new_fname_cache))}"
       else
-        return @@build_dir + new_fname
+        return ::DexterityThumbs.middleman_abs_path(new_fname)
       end
 
     end
