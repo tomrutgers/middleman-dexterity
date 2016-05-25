@@ -27,7 +27,13 @@ If you want to specify a different cache directory for the thumbnails:
 `activate :dexterity, :cache_dir => 'thumb_cache_directory'`
 
 Note that if `:cache_dir` is a nested directory (i.e. `cache/thumbs`) then `cache/` will be leftover after cleanup.
-    
+
 ##Dependencies:
 
 dunno yet, I'll get something together soon
+
+##Todo:
+
+* pass an array of images/sizes to generate (so that thumbs don't need to be explicitly made in a file)
+* maybe just pass a minimum size and then target size and auto-thumb images over a size
+* general cleanup

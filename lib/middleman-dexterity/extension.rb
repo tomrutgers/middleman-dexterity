@@ -27,9 +27,6 @@ class DexterityThumbs < ::Middleman::Extension
   end
 
   def after_build(builder)
-    #Dir.glob(@@cache + "/**/*") do |item|
-    #  puts item
-    #end
     Find.find(@@cache) do |img|
       unless File.directory?(img)
         FileUtils.mv(img, img.gsub(@@cache, @@build_dir))
@@ -37,7 +34,7 @@ class DexterityThumbs < ::Middleman::Extension
       end
     end
 
-    FileUtils.rm_r @@cache
+    FileUtils.rm_r @@cache ## if this is something like cache/thumbs then cache/ will be left over
 
   end
 
@@ -53,7 +50,7 @@ class DexterityThumbs < ::Middleman::Extension
 
     def create_image_thumb(image_path, resize_string)
 
-      new_fname = image_path[0..-5] + "_" + resize_string + image_path [-4..-1] # yeah i know this is bad
+      new_fname = image_path[0..(image_path.rindex('.') - 1)] + "_" + resize_string + image_path[image_path.rindex('.')..-1] 
       new_fname_cache = @@cache + ::DexterityThumbs.middleman_abs_path(new_fname)
 
       unless @@images.include?(new_fname)
