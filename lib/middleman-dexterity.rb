@@ -1,6 +1,6 @@
 require "middleman-core"
 
-Middleman::Extensions.register :middleman-dexterity do
-  require "my-extension/extension"
-  MyExtension
+Middleman::Extensions.register :dexterity do
+  require "middleman-dexterity/extension"
+  DexterityThumbs
 end
