@@ -24,7 +24,7 @@ class DexterityThumbs < ::Middleman::Extension
 
 
     if (File.directory?(@@cache)) and (options.pre_clear_cache)
-      FileUtils.rm_r @@cache
+      FileUtils.rm_r @@cache # this can break with livereload and is recommended to disable on development
     end
 
   end
@@ -59,7 +59,6 @@ class DexterityThumbs < ::Middleman::Extension
   helpers do
 
     def create_image_thumb(image_path, resize_string)
-
       new_fname = image_path[0..(image_path.rindex('.') - 1)] + "_" + resize_string + image_path[image_path.rindex('.')..-1]
       new_fname_cache = @@cache + ::DexterityThumbs.middleman_abs_path(new_fname)
 
@@ -75,6 +74,31 @@ class DexterityThumbs < ::Middleman::Extension
 
       if @@environment == :development
         return "data:#{image.mime_type};base64,#{Base64.strict_encode64(File.read(new_fname_cache))}"
+      else
+        return ::DexterityThumbs.middleman_abs_path(new_fname)
+      end
+    end
+
+    def create_square_thumb(image_path, dimension)
+
+      dim_dub = dimension.to_i * 2
+      dims = dimension.to_s + "x" + dimension.to_s
+      dims_c = dims + "^"
+      dims_x2 = dim_dub.to_s + "x" + dim_dub.to_s
+
+      new_fname = image_path[0..(image_path.rindex('.') - 1)] + "_square_" + dims + image_path[image_path.rindex('.')..-1]
+      new_fname_cache = @@cache + ::DexterityThumbs.middleman_abs_path(new_fname)
+      mime_type = MiniMagick::Image.open(::DexterityThumbs.abs_path(image_path)).mime_type
+
+
+      image = MiniMagick::Tool::Convert.new do |convert|
+        # convert -size <dimensions x 2> <image_path.filetype> -thumbnail <dimensions>^ -gravity center -extent <dimensions>  <image_path_square_dimensions.filetype>
+        # I think in the size I don't __have__ to double the dimensions; I'm not too familiar with imagemagick
+        convert << "-size" << dims_x2 << ::DexterityThumbs.abs_path(image_path) << "-thumbnail" << dims_c << "-gravity" << "center" << "-extent" << dims << new_fname_cache
+      end
+
+      if @@environment == :development
+        return "data:#{mime_type};base64,#{Base64.strict_encode64(File.read(new_fname_cache))}"
       else
         return ::DexterityThumbs.middleman_abs_path(new_fname)
       end

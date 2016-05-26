@@ -12,6 +12,14 @@ For whatever reason it appears that extensions get unloaded between compile time
 <img src="<%= create_image_thumb '/images/test-images/3.jpg','50x50' %>"/> <!-- target both -->
 ```
 
+You can also generate squared thumbnails:
+```
+<img src="<%= create_square_thumb '/images/test-images/2.jpg','200' %>"/>
+```
+The first parameter is the image path (the full `/images/test-images/2.jpg` works, or just `test-images/2.jpg`), and the 2nd is the number of pixels per side of the generated thumb.
+
+
+
 ##In middleman:
 
 Place the following in your gemfile:
@@ -27,6 +35,14 @@ If you want to specify a different cache directory for the thumbnails:
 `activate :dexterity, :cache_dir => 'thumb_cache_directory'`
 
 Note that if `:cache_dir` is a nested directory (i.e. `cache/thumbs`) then `cache/` will be leftover after cleanup.
+
+You can also disable clearing the cache with the following options:
+```
+activate :dexterity, :pre_clear_cache => false, :post_clear_cache => true
+```
+It appears that clearing the cache on initialization breaks when using livereload, so disable clearing the cache in init in :development.
+
+So far I haven't figured out a way to clear the cache when a middleman server exits, so `post_clear_cache` does nothing in :development.
 
 ##Dependencies:
 
