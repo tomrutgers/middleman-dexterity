@@ -88,6 +88,7 @@ class DexterityThumbs < ::Middleman::Extension
 
       new_fname = image_path[0..(image_path.rindex('.') - 1)] + "_square_" + dims + image_path[image_path.rindex('.')..-1]
       new_fname_cache = @@cache + ::DexterityThumbs.middleman_abs_path(new_fname)
+      FileUtils.mkdir_p(File.dirname(new_fname_cache))
       mime_type = MiniMagick::Image.open(::DexterityThumbs.abs_path(image_path)).mime_type
 
 
