@@ -95,7 +95,7 @@ class DexterityThumbs < ::Middleman::Extension
       image = MiniMagick::Tool::Convert.new do |convert|
         # convert -size <dimensions x 2> <image_path.filetype> -thumbnail <dimensions>^ -gravity center -extent <dimensions>  <image_path_square_dimensions.filetype>
         # I think in the size I don't __have__ to double the dimensions; I'm not too familiar with imagemagick
-        convert << "-size" << dims_x2 << ::DexterityThumbs.abs_path(image_path) << "-thumbnail" << dims_c << "-gravity" << "center" << "-quality" << "60" << "-extent" << dims << new_fname_cache
+        convert << "-size" << dims_x2 << ::DexterityThumbs.abs_path(image_path) << "-thumbnail" << dims_c << "-gravity" << "center" << "-quality" << 60 << "-extent" << dims << new_fname_cache
       end
 
       if @@environment == :development
